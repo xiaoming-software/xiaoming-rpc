@@ -5,10 +5,14 @@
 package com.xiaoming.software.rpc.server;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -16,6 +20,8 @@ import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
+import com.xiaoming.software.rpc.client.XiaoMingRpcClient;
+import com.xiaoming.software.rpc.server.handler.DefaultServerHandlerImpl;
 import com.xiaoming.software.rpc.server.handler.XiaoMingRpcServerHandler;
 
 
@@ -62,26 +68,17 @@ public class XiaoMingRpcServer {
 		Runnable task = new Runnable() {
 			@Override
 			public void run() {
-				InputStream in = null;
 				try {
-					in = socket.getInputStream();
-					BufferedInputStream bfIn = new BufferedInputStream(in);
-					
-					StringBuffer sb = new StringBuffer();
-					int end = 0;
-					byte[] b = new byte[1024 * 50];
-					while((end = bfIn.read(b)) != -1){
-						sb.append(new String(b, 0, end, "UTF-8"));
+					InputStream in = socket.getInputStream();
+					BufferedReader br = new BufferedReader(new InputStreamReader(in));
+					while(true){
+		                String line = br.readLine();
+		                if (line != null) {
+		                	//调用业务handler
+							handler.handle(line);
+		                }
 					}
-					
-					//调用业务handler
-					handler.handle(sb.toString());
-				} catch (IOException e) {
-					try {
-						socket.close();
-					} catch (IOException e1) {
-						e1.printStackTrace();
-					}
+				} catch (Exception e) {
 					e.printStackTrace();
 				}finally{
 					if(socket != null){
@@ -97,6 +94,12 @@ public class XiaoMingRpcServer {
 			}
 		};
 		return task;
+	}
+	
+	public static void main(String[] args) {
+		DefaultServerHandlerImpl handler = new DefaultServerHandlerImpl();
+		XiaoMingRpcServer  server = new XiaoMingRpcServer(8080, handler);
+		server.startServer();
 	}
 	
 }
