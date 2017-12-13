@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Copyright (c) 2017 xiaoming software Technology Co., Ltd.
  * All Rights Reserved.
  */
@@ -65,6 +65,7 @@ public class XiaoMingRpcClient {
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+                   socket = null; 
 		}
 	}
 	
