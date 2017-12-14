@@ -15,12 +15,15 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 import com.xiaoming.software.rpc.client.XiaoMingRpcClient;
+import com.xiaoming.software.rpc.exception.XiaoMingRpcException;
 import com.xiaoming.software.rpc.server.handler.DefaultServerHandlerImpl;
 import com.xiaoming.software.rpc.server.handler.XiaoMingRpcServerHandler;
 
@@ -30,13 +33,18 @@ import com.xiaoming.software.rpc.server.handler.XiaoMingRpcServerHandler;
  * @author xiaoming
  */
 public class XiaoMingRpcServer {
+	private ExecutorUtil executorUtil = new ExecutorUtil();
 	private int port = 18088;
+	private int maxClientNum = 0;
 	
 	private XiaoMingRpcServerHandler handler = null;
 	
-	public XiaoMingRpcServer(int port, XiaoMingRpcServerHandler handler){
+	public XiaoMingRpcServer(int port, XiaoMingRpcServerHandler handler, int maxClientNum){
 		this.port = port;
 		this.handler = handler;
+		this.maxClientNum = maxClientNum;
+		executorUtil.setMaxPoolSize(maxClientNum);
+		executorUtil.initExecutor();
 	}
 	/**
 	 * To start server
@@ -50,7 +58,10 @@ public class XiaoMingRpcServer {
 				Socket socket = server.accept();
 				
 				//开启新线程去执行请求
-				ExecutorUtil.executor( getTask( socket));
+				if(executorUtil.getKeepAliveNum() <= 0){
+					throw new XiaoMingRpcException("The task is over flow max pool size:" + maxClientNum);
+				}
+				executorUtil.executor( getTask( socket));
 			}
 		} catch (IOException e) {
 			if(server != null){
@@ -63,7 +74,7 @@ public class XiaoMingRpcServer {
 			e.printStackTrace();
 		}
 	}
-	
+	int i = 0;
 	private Runnable getTask(Socket socket){
 		Runnable task = new Runnable() {
 			@Override
@@ -98,7 +109,7 @@ public class XiaoMingRpcServer {
 	
 	public static void main(String[] args) {
 		DefaultServerHandlerImpl handler = new DefaultServerHandlerImpl();
-		XiaoMingRpcServer  server = new XiaoMingRpcServer(8080, handler);
+		XiaoMingRpcServer  server = new XiaoMingRpcServer(8080, handler, 128);
 		server.startServer();
 	}
 	
@@ -111,42 +122,29 @@ public class XiaoMingRpcServer {
  */
 class ExecutorUtil {  
   
-    /** 最小线程数 */  
-    private static int corePoolSize = 8;
     /** 最大线程数 */  
-    private static int maxPoolSize = 16;
-    /** 等待处理队列长度 */  
-    private static int queueCapacity = 32;  
-    /** 空闲时间 */
-    private static int keepAliveSeconds = 300;  
+    private int maxPoolSize = 128;
     
-    private static Executor executor = null;
+    private ThreadPoolExecutor executor = null;
     
-    static{
-    	if(executor == null){
-    		executor = asyncConfig();
-    	}
+    public void setMaxPoolSize(int maxPoolSize){
+    	this.maxPoolSize = maxPoolSize;
     }
     
-	private static Executor asyncConfig() {
-		BlockingQueue<Runnable> taskQueue = new LinkedBlockingQueue<Runnable>(queueCapacity);
-		ThreadPoolExecutor executor = new ThreadPoolExecutor(corePoolSize, maxPoolSize, keepAliveSeconds, TimeUnit.SECONDS, taskQueue, new RejectedExecutionHandler() {
-
-			@Override
-			public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-				r.run();
-			}
-
-		});
-		
-		return executor;
+    public int getKeepAliveNum(){
+    	return executor.getMaximumPoolSize() - executor.getActiveCount();
+    }
+    
+	public void initExecutor() {
+		ThreadPoolExecutor executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(maxPoolSize);
+		this.executor = executor;
 	} 
 	/**
 	 * 异步执行
 	 * @param task
 	 * @author xiaoming
 	 */
-	public static void executor(Runnable task){
+	public void executor(Runnable task){
 		executor.execute(task);
 	}
 }  
