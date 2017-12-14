@@ -4,25 +4,16 @@
  */
 package com.xiaoming.software.rpc.server;
 
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketAddress;
-import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
-import com.xiaoming.software.rpc.client.XiaoMingRpcClient;
+import com.xiaoming.concurrent.zip.ConcurrentZip;
 import com.xiaoming.software.rpc.exception.XiaoMingRpcException;
 import com.xiaoming.software.rpc.server.handler.DefaultServerHandlerImpl;
 import com.xiaoming.software.rpc.server.handler.XiaoMingRpcServerHandler;
@@ -33,13 +24,28 @@ import com.xiaoming.software.rpc.server.handler.XiaoMingRpcServerHandler;
  * @author xiaoming
  */
 public class XiaoMingRpcServer {
+	private boolean enableZIP = false;
 	private ExecutorUtil executorUtil = new ExecutorUtil();
 	private int port = 18088;
 	private int maxClientNum = 0;
 	
 	private XiaoMingRpcServerHandler handler = null;
-	
+	/**
+	 * @param port
+	 * @param handler
+	 * @param maxClientNum
+	 */
 	public XiaoMingRpcServer(int port, XiaoMingRpcServerHandler handler, int maxClientNum){
+		this(port, handler, maxClientNum, false);
+	}
+	/**
+	 * @param port
+	 * @param handler
+	 * @param maxClientNum
+	 * @param enableZIP 是否开启压缩传输？默认false
+	 */
+	public XiaoMingRpcServer(int port, XiaoMingRpcServerHandler handler, int maxClientNum, boolean enableZIP){
+		this.enableZIP = enableZIP;
 		this.port = port;
 		this.handler = handler;
 		this.maxClientNum = maxClientNum;
@@ -74,7 +80,11 @@ public class XiaoMingRpcServer {
 			e.printStackTrace();
 		}
 	}
-	int i = 0;
+	
+	/**
+	 * @param socket
+	 * @return
+	 */
 	private Runnable getTask(Socket socket){
 		Runnable task = new Runnable() {
 			@Override
@@ -85,6 +95,10 @@ public class XiaoMingRpcServer {
 					while(true){
 		                String line = br.readLine();
 		                if (line != null) {
+		                	/** Enable zip transfer msg */
+		                	if(enableZIP){
+		                		line = ConcurrentZip.concurrentGUZip(line);
+		                	}
 		                	//调用业务handler
 							handler.handle(line);
 		                }

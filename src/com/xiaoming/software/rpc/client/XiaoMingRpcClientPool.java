@@ -12,22 +12,37 @@ import java.util.concurrent.ConcurrentLinkedQueue;
  * @author xiaoming
  */
 public class XiaoMingRpcClientPool {
+	private boolean enableZIP = false;
 	private int maxPoolSize = 16;
 	private String addres;
 	private int port;
 	private int timeOut = 1000;
 	
 	ConcurrentLinkedQueue<XiaoMingRpcClient> clientPool = new ConcurrentLinkedQueue<XiaoMingRpcClient>();
-	
+	/**
+	 * @param addres
+	 * @param port
+	 */
 	public XiaoMingRpcClientPool(String addres, int port){
-		this(addres, port, 16, 1000);
+		this(addres, port, 16, 1000, false);
 	}
-	
+	/**
+	 * @param addres
+	 * @param port
+	 * @param maxPoolSize
+	 */
 	public XiaoMingRpcClientPool(String addres, int port, int maxPoolSize){
-		this(addres, port, maxPoolSize, 1000);
+		this(addres, port, maxPoolSize, 1000, false);
 	}
-	
-	public XiaoMingRpcClientPool(String addres, int port, int maxPoolSize, int timeOut){
+	/**
+	 * @param addres
+	 * @param port
+	 * @param maxPoolSize
+	 * @param timeOut
+	 * @param enableZIP 是否启用zip压缩传输？默认false
+	 */
+	public XiaoMingRpcClientPool(String addres, int port, int maxPoolSize, int timeOut, boolean enableZIP){
+		this.enableZIP = enableZIP;
 		this.addres = addres;
 		this.port = port;
 		this.maxPoolSize = maxPoolSize;
@@ -38,9 +53,12 @@ public class XiaoMingRpcClientPool {
 			newClient();
 		}
 	}
+	/**
+	 * Creat a new client
+	 */
 	private void newClient(){
 		if(clientPool.size() < this.maxPoolSize){
-			XiaoMingRpcClient client = new XiaoMingRpcClient(this.addres, this.port, this.timeOut);
+			XiaoMingRpcClient client = new XiaoMingRpcClient(this.addres, this.port, this.timeOut, this.enableZIP);
 			clientPool.add(client);
 		}
 	}
