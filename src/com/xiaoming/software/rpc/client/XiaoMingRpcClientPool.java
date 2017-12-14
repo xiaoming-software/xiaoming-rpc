@@ -107,7 +107,11 @@ public class XiaoMingRpcClientPool {
 	public int getTimeOut() {
 		return timeOut;
 	}
-
+	
+	/**
+	 * Test client pool
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		StringBuilder sb = new StringBuilder();
 		for(int i = 0;i<10000;i++){
