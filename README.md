@@ -35,3 +35,9 @@ new Thread(new Runnable() {
 			}
 		}).start();
 ```
+
+### 开启zip压缩传输，client和server都必须同时一起开启。
+```java
+XiaoMingRpcServer server = new XiaoMingRpcServer(28888, handler, 128, true);// server 开启zip压缩支持
+XiaoMingRpcClientPool pool = new XiaoMingRpcClientPool("192.168.0.119", 8080, 2， true);// client 开启zip压缩模式传输
+```
