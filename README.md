@@ -22,7 +22,7 @@ client.close();
 ### client pool 多线程高并发情况下是线程安全的链接。
 #### 其中2是链接个数
 ```java
-XiaoMingRpcClientPool pool = new XiaoMingRpcClientPool("192.168.0.119", 8080, 2);
+XiaoMingRpcClientPool pool = new XiaoMingRpcClientPool("192.168.0.119", 28888, 2);
 new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -39,5 +39,5 @@ new Thread(new Runnable() {
 ### 开启zip压缩传输，client和server都必须同时一起开启。
 ```java
 XiaoMingRpcServer server = new XiaoMingRpcServer(28888, handler, 128, true);// server 开启zip压缩支持
-XiaoMingRpcClientPool pool = new XiaoMingRpcClientPool("192.168.0.119", 8080, 2， true);// client 开启zip压缩模式传输
+XiaoMingRpcClientPool pool = new XiaoMingRpcClientPool("192.168.0.119", 28888, 2， true);// client 开启zip压缩模式传输
 ```
