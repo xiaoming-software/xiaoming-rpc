@@ -1,5 +1,5 @@
 # xiaoming-rpc
-XiaoMing java版RPC工具，高并发，大数据文本传输性能不错，支持zip压缩模式传输。
+XiaoMing java版RPC工具，高并发，大数据文本传输性能不错，支持zip压缩模式传输，速度最快的通信工具。
 
 # 如何使用？
 
